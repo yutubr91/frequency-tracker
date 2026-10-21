@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="FREQUENCY — Tracker BEP-20 en lecture seule">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://frequency-tracker-api.YOUR-SUBDOMAIN.workers.dev https://challenges.cloudflare.com; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests;">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <title>FREQUENCY · Tracker BEP-20</title>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+  <div class="space-glow glow-a"></div><div class="space-glow glow-b"></div>
+  <header class="topbar">
+    <div class="brand-mark">FM</div>
+    <div class="brand"><strong>FREQUENCY <span>TRACKER</span></strong><small>BNB SMART CHAIN / LECTURE SEULE</small></div>
+    <button class="install-btn" id="installBtn" hidden>Installer</button>
+    <div class="status"><i></i> BETA</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">TABLEAU DE BORD BEP-20</p>
+        <h1>Ton portefeuille.<br><em>En un coup d'œil.</em></h1>
+        <p class="muted">Colle une adresse publique BNB Smart Chain et visualise instantanément tes soldes, tes jetons et tes dernières transactions.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#tracker">Analyser une adresse <span>↗</span></a>
+          <a class="button ghost" href="#how">Comment ça marche</a>
+        </div>
+      </div>
+      <div class="orbital-art" aria-label="Illustration stylisée de station spatiale">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="planet"><div class="planet-shine"></div></div>
+        <div class="station"><span></span><b></b><i></i></div>
+        <div class="spark spark-one">✦</div><div class="spark spark-two">·</div><div class="spark spark-three">✧</div>
+        <div class="art-caption"><i></i> LECTURE ON-CHAIN</div>
+      </div>
+    </section>
+
+    <section class="notice">
+      <span class="notice-icon">ⓘ</span>
+      <p><strong>Lecture seule.</strong> Cette application lit des données publiques de la blockchain. Elle ne détient pas vos fonds, ne demande jamais votre clé privée et n'effectue aucune transaction.</p>
+    </section>
+
+    <section class="panel" id="tracker">
+      <div class="section-heading compact">
+        <div><p class="eyebrow">BNB SMART CHAIN · BEP-20</p><h2>Analyser une adresse</h2></div>
+        <span class="wallet-icon">◈</span>
+      </div>
+      <label for="addressInput">Adresse publique BEP-20</label>
+      <input id="addressInput" type="text" placeholder="0x… (adresse publique uniquement)" autocomplete="off" spellcheck="false" inputmode="text" maxlength="42">
+      <p class="field-help">Ne saisissez jamais votre phrase secrète ni votre clé privée.</p>
+
+      <!-- Widget Turnstile -->
+      <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY" data-action="tracker" data-theme="dark"></div>
+
+      <div class="actions-row">
+        <button class="button primary" id="analyzeBtn" type="button">Analyser</button>
+        <button class="button ghost" id="clearBtn" type="button">Effacer</button>
+      </div>
+      <div id="statusMessage" class="inline-message" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="stats-grid" id="resultsGrid" hidden>
+      <article class="panel balance-card">
+        <div class="panel-heading"><span>Valeur estimée</span><span class="chip">USD</span></div>
+        <div class="balance" id="totalUsd">0.00 <small>USD</small></div>
+        <div class="balance-foot"><span class="pulse"></span> <span id="addressShort">—</span></div>
+      </article>
+      <article class="panel stat-card"><span class="stat-icon">◇</span><span class="muted">Jetons détectés</span><strong id="tokenCount">0</strong><small>Parmi la liste suivie</small></article>
+      <article class="panel stat-card"><span class="stat-icon">◎</span><span class="muted">BNB natif</span><strong id="bnbBalance">—</strong><small>Solde natif</small></article>
+      <article class="panel stat-card"><span class="stat-icon">⌁</span><span class="muted">Transactions récentes</span><strong id="txCount">—</strong><small>10 dernières BEP-20</small></article>
+    </section>
+
+    <section class="section" id="tokensSection" hidden>
+      <div class="section-heading"><div><p class="eyebrow">PORTEFEUILLE</p><h2>Jetons BEP-20</h2></div><span class="muted" id="lastUpdate"></span></div>
+      <div class="panel"><table class="token-table">
+        <thead><tr><th>Jeton</th><th>Solde</th><th>Contrat</th></tr></thead>
+        <tbody id="tokenRows"></tbody>
+      </table></div>
+    </section>
+
+    <section class="section" id="txSection" hidden>
+      <div class="section-heading"><div><p class="eyebrow">HISTORIQUE</p><h2>Dernières transactions</h2></div><span class="muted">BEP-20</span></div>
+      <div class="panel"><div id="txList" class="tx-list"></div></div>
+    </section>
+
+    <section class="lower-grid" id="how">
+      <article class="panel">
+        <div class="section-heading compact"><div><p class="eyebrow">FONCTIONNEMENT</p><h2>Comment ça marche</h2></div><span class="wallet-icon">⌘</span></div>
+        <p class="muted small">1. Collez une adresse publique BEP-20.<br>2. L'application interroge notre proxy sécurisé.<br>3. Les soldes et transactions s'affichent en lecture seule.</p>
+        <p class="muted small">Aucune connexion de wallet. Aucune signature. Aucun accès à vos fonds.</p>
+      </article>
+      <article class="panel">
+        <div class="section-heading compact"><div><p class="eyebrow">CONFIDENTIALITÉ</p><h2>Vos données</h2></div><span class="wallet-icon">⛨</span></div>
+        <p class="muted small">Les adresses analysées ne sont pas envoyées à des tiers. Les requêtes transitent par notre proxy qui ne conserve aucune adresse.</p>
+        <p class="muted small">Les soldes affichés proviennent de la blockchain publique et sont donc visibles par tous, comme sur un explorateur.</p>
+      </article>
+    </section>
+    <footer><span>FREQUENCY TRACKER © 2026</span><span>LECTURE SEULE · AUCUN PAIEMENT</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
