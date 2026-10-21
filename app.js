@@ -2,7 +2,7 @@
 
 const $ = (id) => document.getElementById(id);
 
-// ⚠️ REMPLACEZ PAR L'URL DE VOTRE WORKER CLOUDFLARE
+// Utilisation de notre proxy Vercel
 const PROXY_BASE = "/api/proxy";
 const SW_HASH_ENDPOINT = PROXY_BASE + "/sw-hash";
 
@@ -14,6 +14,7 @@ const TOKENS = [
   { symbol: "BTCB", name: "Bitcoin BEP-20",  address: "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c", decimals: 18 },
   { symbol: "ETH",  name: "Ethereum BEP-20", address: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8", decimals: 18 },
 ];
+
 const PRICES = Object.freeze({ USDT: 1, USDC: 1, BUSD: 1, CAKE: 2.5, BTCB: 60000, ETH: 3000, BNB: 550 });
 const ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 const MAX_RECENT = 5;
@@ -44,37 +45,17 @@ function rememberAddress(addr) {
   safeStorage.set(LS_KEY, [addr, ...list.filter(a => a !== addr)].slice(0, MAX_RECENT));
 }
 
-function getTurnstileToken() {
-  try { return window.turnstile?.getResponse() || ""; } catch { return ""; }
-}
-
 async function apiGet(params) {
-  const url = new URL(PROXY_BASE);
+  const url = new URL(PROXY_BASE, window.location.origin);
   Object.entries(params).forEach(([k, v]) => { if (v != null) url.searchParams.set(k, String(v)); });
-  const headers = {};
-  const tok = getTurnstileToken();
-  if (tok) headers["X-Turnstile-Token"] = tok;
 
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 15000);
   let res;
   try {
-    res = await fetch(url.toString(), { method: "GET", headers, signal: ctrl.signal, credentials: "omit", referrerPolicy: "no-referrer" });
+    res = await fetch(url.toString(), { method: "GET", signal: ctrl.signal, credentials: "omit", referrerPolicy: "no-referrer" });
   } finally { clearTimeout(t); }
 
-  if (res.status === 429) {
-    const ra = res.headers.get("Retry-After") || "60";
-    throw new Error(`Trop de requêtes. Réessayez dans ${ra}s.`);
-  }
-  if (res.status === 403) {
-    const body = await res.json().catch(() => ({}));
-    if (body.detail === "turnstile-timeout" || body.detail === "turnstile-error") {
-      throw new Error("Le service de vérification est momentanément indisponible. Réessayez dans une minute.");
-    }
-    if (body.error === "Turnstile token required") {
-      throw new Error("Vérification de sécurité manquante. Rechargez la page.");
-    }
-  }
   if (!res.ok) throw new Error("HTTP " + res.status);
   const data = await res.json();
   if (data.status === "0" && !/No .* found/i.test(data.message || "")) throw new Error(data.message || "Erreur API");
@@ -87,10 +68,6 @@ const fetchTokenTransfers = (address) => apiGet({ module: "account", action: "to
 
 async function analyzeAddress(address) {
   $("statusMessage").textContent = "Analyse en cours…";
-  if (!window.turnstile || !getTurnstileToken()) {
-    $("statusMessage").textContent = "Vérification de sécurité indisponible. Désactivez votre bloqueur de publicité ou rechargez la page.";
-    return;
-  }
   try {
     const bnbRaw = await fetchNativeBalance(address);
     const bnbAmount = Number(bnbRaw) / 1e18;
@@ -110,11 +87,9 @@ async function analyzeAddress(address) {
     renderResults(address, totalUsd, detected, transfers);
     rememberAddress(address);
     $("statusMessage").textContent = "Analyse terminée. Données publiques on-chain.";
-    if (window.turnstile) window.turnstile.reset();
   } catch (e) {
     const msg = e.name === "AbortError" ? "Délai dépassé. Réessayez." : "Erreur : " + e.message;
     $("statusMessage").textContent = msg;
-    if (window.turnstile) window.turnstile.reset();
   }
 }
 
@@ -202,7 +177,6 @@ $("clearBtn").addEventListener("click", () => {
   $("resultsGrid").hidden = true;
   $("tokensSection").hidden = true;
   $("txSection").hidden = true;
-  if (window.turnstile) window.turnstile.reset();
 });
 
 $("addressInput").addEventListener("keydown", e => { if (e.key === "Enter") $("analyzeBtn").click(); });
@@ -217,44 +191,10 @@ $("installBtn").addEventListener("click", async () => {
   $("installBtn").hidden = true;
 });
 
-async function sha256Hex(text) {
-  const buf = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function verifyServiceWorkerIntegrity() {
-  try {
-    const res = await fetch(SW_HASH_ENDPOINT, { credentials: "omit" });
-    if (!res.ok) return;
-    const { hash: expected } = await res.json();
-    if (!expected) return;
-    const swRes = await fetch("./sw.js", { cache: "no-store" });
-    const swText = await swRes.text();
-    const actual = await sha256Hex(swText);
-    if (actual !== expected) {
-      console.error("Service Worker integrity mismatch!");
-      if ("serviceWorker" in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister()));
-        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
-      }
-    }
-  } catch (e) {
-    console.warn("SW integrity check skipped:", e.message);
-  }
-}
-
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   window.addEventListener("load", async () => {
     try {
-      const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-      const regs = await navigator.serviceWorker.getRegistrations();
-      if (regs.length > 1) {
-        for (const r of regs) if (r.scope !== reg.scope) await r.unregister();
-      }
-      verifyServiceWorkerIntegrity();
-      setInterval(verifyServiceWorkerIntegrity, 6 * 60 * 60 * 1000);
+      await navigator.serviceWorker.register("./sw.js", { scope: "./" });
     } catch (e) { console.warn("SW registration failed:", e.message); }
   });
 }
