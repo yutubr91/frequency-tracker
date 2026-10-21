@@ -3,7 +3,7 @@
 const $ = (id) => document.getElementById(id);
 
 // ⚠️ REMPLACEZ PAR L'URL DE VOTRE WORKER CLOUDFLARE
-const PROXY_BASE = "https://frequency-tracker-api.YOUR-SUBDOMAIN.workers.dev";
+const PROXY_BASE = "/api/proxy";
 const SW_HASH_ENDPOINT = PROXY_BASE + "/sw-hash";
 
 const TOKENS = [
