@@ -1,108 +1,164 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="FREQUENCY — Tracker BEP-20 en lecture seule">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://frequency-tracker-api.YOUR-SUBDOMAIN.workers.dev https://challenges.cloudflare.com; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://unpkg.com https://modelviewer.dev https://cdn.jsdelivr.net; font-src 'self'; object-src 'none'; upgrade-insecure-requests;">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <title>FREQUENCY · Tracker BEP-20</title>
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
+
+  <div id="splash-screen">
+    <div class="coin-container">
+      <div class="coin-3d">
+        <div class="coin-face coin-front">FM</div>
+        <div class="coin-face coin-back">₿</div>
+      </div>
+    </div>
+    <h2 class="splash-title">FREQUENCY TRACKER</h2>
+    <div class="splash-loader"></div>
+  </div>
+
   <div class="space-glow glow-a"></div><div class="space-glow glow-b"></div>
+  
   <header class="topbar">
     <div class="brand-mark">FM</div>
-    <div class="brand"><strong>FREQUENCY <span>TRACKER</span></strong><small>BNB SMART CHAIN / LECTURE SEULE</small></div>
-    <button class="install-btn" id="installBtn" hidden>Installer</button>
+    <div class="brand"><strong>FREQUENCY <span>TRACKER</span></strong><small>BNB SMART CHAIN</small></div>
+    <div class="header-controls">
+      <button id="openPricingBtn" class="button primary" style="padding: 8px 14px; font-size: 12px; box-shadow: 0 0 15px rgba(98, 244, 220, 0.4);">✨ Passer Pro</button>
+      <button id="themeToggle" class="icon-btn" title="Thème">🌙</button>
+      <select id="langSelect" class="lang-select">
+        <option value="fr">🇫🇷 FR</option><option value="en">🇬🇧 EN</option><option value="es">🇪🇸 ES</option>
+      </select>
+    </div>
     <div class="status"><i></i> BETA</div>
   </header>
 
   <main>
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">TABLEAU DE BORD BEP-20</p>
-        <h1>Ton portefeuille.<br><em>En un coup d'œil.</em></h1>
-        <p class="muted">Colle une adresse publique BNB Smart Chain et visualise instantanément tes soldes, tes jetons et tes dernières transactions.</p>
-        <div class="hero-actions">
-          <a class="button primary" href="#tracker">Analyser une adresse <span>↗</span></a>
-          <a class="button ghost" href="#how">Comment ça marche</a>
+    <div id="assistant" class="assistant-container">
+      <div class="chat-window" id="chatWindow" hidden>
+        <div class="chat-header"><span data-i18n="chat_title">Assistante IA</span><button id="closeChat">×</button></div>
+        <div class="chat-messages" id="chatMessages"><div class="msg bot" data-i18n="chat_welcome">Salut ! Pose-moi une question.</div></div>
+        <div class="chat-input-area">
+          <input type="text" id="chatInput" placeholder="Posez votre question..." autocomplete="off">
+          <button id="sendChat">↑</button>
         </div>
       </div>
-      <div class="orbital-art" aria-label="Illustration stylisée de station spatiale">
+      <div class="avatar-3d-wrapper" id="orbBtn" title="Discuter">
+        <div class="hologram-base"></div>
+        <model-viewer src="https://modelviewer.dev/shared/assets/models/Astronaut.glb" auto-rotate rotation-per-second="30deg" disable-zoom camera-controls interaction-prompt="none"></model-viewer>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow" data-i18n="hero_eyebrow">TABLEAU DE BORD BEP-20</p>
+        <h1 data-i18n="hero_title">Ton portefeuille.<br><em>En un coup d'œil.</em></h1>
+        <p class="muted" data-i18n="hero_desc">Colle une adresse publique BNB Smart Chain et visualise tes soldes.</p>
+      </div>
+      <div class="orbital-art">
         <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
         <div class="planet"><div class="planet-shine"></div></div>
         <div class="station"><span></span><b></b><i></i></div>
-        <div class="spark spark-one">✦</div><div class="spark spark-two">·</div><div class="spark spark-three">✧</div>
-        <div class="art-caption"><i></i> LECTURE ON-CHAIN</div>
       </div>
-    </section>
-
-    <section class="notice">
-      <span class="notice-icon">ⓘ</span>
-      <p><strong>Lecture seule.</strong> Cette application lit des données publiques de la blockchain. Elle ne détient pas vos fonds, ne demande jamais votre clé privée et n'effectue aucune transaction.</p>
     </section>
 
     <section class="panel" id="tracker">
       <div class="section-heading compact">
-        <div><p class="eyebrow">BNB SMART CHAIN · BEP-20</p><h2>Analyser une adresse</h2></div>
-        <span class="wallet-icon">◈</span>
+        <div><p class="eyebrow">BNB SMART CHAIN</p><h2 data-i18n="tracker_title">Analyser une adresse</h2></div>
       </div>
-      <label for="addressInput">Adresse publique BEP-20</label>
-      <input id="addressInput" type="text" placeholder="0x… (adresse publique uniquement)" autocomplete="off" spellcheck="false" inputmode="text" maxlength="42">
-      <p class="field-help">Ne saisissez jamais votre phrase secrète ni votre clé privée.</p>
-
-      <!-- Widget Turnstile -->
-      <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY" data-action="tracker" data-theme="dark"></div>
-
-      <div class="actions-row">
-        <button class="button primary" id="analyzeBtn" type="button">Analyser</button>
-        <button class="button ghost" id="clearBtn" type="button">Effacer</button>
+      <label for="addressInput" data-i18n="tracker_label">Adresse publique BEP-20</label>
+      <input id="addressInput" type="text" placeholder="0x…" autocomplete="off" spellcheck="false" maxlength="42">
+      <div class="actions-row" style="margin-top: 15px;">
+        <button class="button primary" id="analyzeBtn" type="button" data-i18n="btn_analyze">Analyser</button>
+        <button class="button ghost" id="clearBtn" type="button" data-i18n="btn_clear">Effacer</button>
       </div>
-      <div id="statusMessage" class="inline-message" role="status" aria-live="polite"></div>
+      <div id="statusMessage" class="inline-message"></div>
     </section>
 
     <section class="stats-grid" id="resultsGrid" hidden>
       <article class="panel balance-card">
-        <div class="panel-heading"><span>Valeur estimée</span><span class="chip">USD</span></div>
+        <div class="panel-heading"><span data-i18n="res_value">Valeur estimée</span><span class="chip">USD</span></div>
         <div class="balance" id="totalUsd">0.00 <small>USD</small></div>
-        <div class="balance-foot"><span class="pulse"></span> <span id="addressShort">—</span></div>
       </article>
-      <article class="panel stat-card"><span class="stat-icon">◇</span><span class="muted">Jetons détectés</span><strong id="tokenCount">0</strong><small>Parmi la liste suivie</small></article>
-      <article class="panel stat-card"><span class="stat-icon">◎</span><span class="muted">BNB natif</span><strong id="bnbBalance">—</strong><small>Solde natif</small></article>
-      <article class="panel stat-card"><span class="stat-icon">⌁</span><span class="muted">Transactions récentes</span><strong id="txCount">—</strong><small>10 dernières BEP-20</small></article>
+      <article class="panel stat-card"><strong id="tokenCount">0</strong><small data-i18n="res_tokens">Jetons</small></article>
+      <article class="panel stat-card"><strong id="bnbBalance">—</strong><small>BNB</small></article>
+    </section>
+
+    <section class="panel" id="affiliateBanner" hidden style="margin-top: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h3 style="margin: 0; font-size: 18px;" data-i18n="aff_title">Besoin d'échanger vos cryptos ?</h3>
+          <p class="muted small" style="margin-top: 4px;" data-i18n="aff_desc">Créez un compte sur Binance.</p>
+        </div>
+        <a href="https://www.binance.com/fr/register?ref=VOTRE_CODE" target="_blank" class="button primary" data-i18n="aff_btn">S'inscrire ↗</a>
+      </div>
     </section>
 
     <section class="section" id="tokensSection" hidden>
-      <div class="section-heading"><div><p class="eyebrow">PORTEFEUILLE</p><h2>Jetons BEP-20</h2></div><span class="muted" id="lastUpdate"></span></div>
+      <div class="section-heading"><h2 data-i18n="res_bep20">Jetons BEP-20</h2></div>
       <div class="panel"><table class="token-table">
-        <thead><tr><th>Jeton</th><th>Solde</th><th>Contrat</th></tr></thead>
+        <thead><tr><th data-i18n="th_token">Jeton</th><th data-i18n="th_balance">Solde</th></tr></thead>
         <tbody id="tokenRows"></tbody>
       </table></div>
     </section>
 
-    <section class="section" id="txSection" hidden>
-      <div class="section-heading"><div><p class="eyebrow">HISTORIQUE</p><h2>Dernières transactions</h2></div><span class="muted">BEP-20</span></div>
-      <div class="panel"><div id="txList" class="tx-list"></div></div>
-    </section>
-
-    <section class="lower-grid" id="how">
-      <article class="panel">
-        <div class="section-heading compact"><div><p class="eyebrow">FONCTIONNEMENT</p><h2>Comment ça marche</h2></div><span class="wallet-icon">⌘</span></div>
-        <p class="muted small">1. Collez une adresse publique BEP-20.<br>2. L'application interroge notre proxy sécurisé.<br>3. Les soldes et transactions s'affichent en lecture seule.</p>
-        <p class="muted small">Aucune connexion de wallet. Aucune signature. Aucun accès à vos fonds.</p>
-      </article>
-      <article class="panel">
-        <div class="section-heading compact"><div><p class="eyebrow">CONFIDENTIALITÉ</p><h2>Vos données</h2></div><span class="wallet-icon">⛨</span></div>
-        <p class="muted small">Les adresses analysées ne sont pas envoyées à des tiers. Les requêtes transitent par notre proxy qui ne conserve aucune adresse.</p>
-        <p class="muted small">Les soldes affichés proviennent de la blockchain publique et sont donc visibles par tous, comme sur un explorateur.</p>
-      </article>
-    </section>
-    <footer><span>FREQUENCY TRACKER © 2026</span><span>LECTURE SEULE · AUCUN PAIEMENT</span></footer>
+    <footer><span>FREQUENCY TRACKER © 2026</span></footer>
   </main>
+
+  <div id="pricingModal" class="modal-overlay" hidden>
+    <div class="modal-content">
+      <button id="closePricingBtn" class="modal-close">×</button>
+      <h2 style="text-align: center; font-size: 28px; margin-top: 0;">Choisissez votre plan</h2>
+      <p class="muted" style="text-align: center; margin-bottom: 30px;">Paiement 100% en Cryptomonnaie (BNB).</p>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h3>Explorer</h3><div class="price">0€ <span>/mois</span></div>
+          <ul class="features"><li>✅ 1 adresse</li><li>✅ Soldes basiques</li><li>❌ Alertes</li></ul>
+          <button class="button ghost full" disabled>Plan actuel</button>
+        </div>
+        <div class="pricing-card featured">
+          <div class="badge">POPULAIRE</div><h3>Orbit</h3><div class="price">4,99€ <span>/mois</span></div>
+          <ul class="features"><li>✅ 10 adresses</li><li>✅ PnL</li><li>✅ Alertes de prix</li></ul>
+          <button class="button primary full" onclick="openPayment('Orbit', 4.99)">Payer en Crypto</button>
+        </div>
+        <div class="pricing-card">
+          <h3>Nebula</h3><div class="price">14,99€ <span>/mois</span></div>
+          <ul class="features"><li>✅ Illimité</li><li>✅ Export CSV</li><li>✅ Support VIP</li></ul>
+          <button class="button ghost full" onclick="openPayment('Nebula', 14.99)">Payer en Crypto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="paymentModal" class="modal-overlay" hidden>
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <button id="closePaymentBtn" class="modal-close">×</button>
+      <h2 style="margin-top: 0;">Paiement en BNB</h2>
+      <p class="muted" style="margin-bottom: 20px;">Scannez le QR code ou copiez l'adresse.</p>
+      <div style="background: #fff; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px;">
+        <img id="qrCodeImg" src="" alt="QR Code" style="width: 200px; height: 200px; display: block;">
+      </div>
+      <div style="background: var(--bg); border: 1px solid var(--line); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        <p class="muted small" style="margin: 0 0 5px 0;">Montant exact :</p>
+        <h3 id="cryptoAmount" style="margin: 0; color: var(--cyan); font-size: 24px;">0.00 BNB</h3>
+        <p class="muted small" style="margin: 5px 0 15px 0;">(Réseau : BEP-20)</p>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="walletAddress" readonly style="font-size: 12px; padding: 10px;">
+          <button id="copyAddressBtn" class="button ghost" style="padding: 10px;">Copier</button>
+        </div>
+      </div>
+
+      <input type="text" id="userWalletInput" placeholder="Votre adresse de portefeuille (0x...)" style="margin-bottom: 10px; text-align: center;">
+      <input type="text" id="txHashInput" placeholder="Collez le Hash de la transaction (0x...)" style="margin-bottom: 10px; text-align: center;">
+      <button id="confirmPaymentBtn" class="button primary full" onclick="verifyPayment()">Vérifier le paiement</button>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
