@@ -25,6 +25,30 @@ async function checkPremiumStatus() {
 document.addEventListener("DOMContentLoaded", () => {
   checkPremiumStatus();
   
+  const chatWindow = $("chatWindow");
+  const orbBtn = $("orbBtn");
+  const chatInput = $("chatInput");
+  const chatMessages = $("chatMessages");
+
+  if (chatWindow) chatWindow.style.display = "none";
+
+  if (orbBtn) {
+    orbBtn.addEventListener("click", () => {
+      if (chatWindow.style.display === "none") {
+        chatWindow.style.display = "flex";
+        chatInput.focus();
+      } else {
+        chatWindow.style.display = "none";
+      }
+    });
+  }
+
+  if ($("closeChat")) {
+    $("closeChat").addEventListener("click", () => { 
+      chatWindow.style.display = "none"; 
+    });
+  }
+
   const logo = document.querySelector(".brand-mark");
   if (logo) {
     logo.addEventListener("click", () => {
@@ -122,23 +146,26 @@ window.addEventListener("load", () => {
   setTimeout(() => { const s = $("splash-screen"); if(s) { s.classList.add("hidden"); setTimeout(()=>s.remove(), 600); } }, 2800);
 });
 
-const chatWindow = $("chatWindow"); const orbBtn = $("orbBtn"); const chatInput = $("chatInput"); const chatMessages = $("chatMessages");
-orbBtn.addEventListener("click", () => { chatWindow.hidden = !chatWindow.hidden; if (!chatWindow.hidden) chatInput.focus(); });
-$("closeChat").addEventListener("click", () => { chatWindow.hidden = true; });
 function addMessage(text, sender) {
+  const chatMessages = $("chatMessages");
   const div = document.createElement("div"); div.className = `msg ${sender}`; div.textContent = text;
   chatMessages.appendChild(div); chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 async function sendChatMessage() {
+  const chatInput = $("chatInput");
+  const chatMessages = $("chatMessages");
   const text = chatInput.value.trim(); if (!text) return;
+  
   addMessage(text, "user"); chatInput.value = "";
   const loadingDiv = document.createElement("div"); loadingDiv.className = "msg bot"; loadingDiv.textContent = "..."; chatMessages.appendChild(loadingDiv); chatMessages.scrollTop = chatMessages.scrollHeight;
+  
   try {
     const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, lang: currentLang }) });
     const data = await res.json(); chatMessages.removeChild(loadingDiv); addMessage(data.reply || "Error", "bot");
   } catch (e) { chatMessages.removeChild(loadingDiv); addMessage("Erreur de connexion.", "bot"); }
 }
-$("sendChat").addEventListener("click", sendChatMessage); chatInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendChatMessage(); });
+$("sendChat").addEventListener("click", sendChatMessage); $("chatInput").addEventListener("keypress", (e) => { if (e.key === "Enter") sendChatMessage(); });
 
 const pricingModal = $("pricingModal");
 $("openPricingBtn").addEventListener("click", () => { pricingModal.hidden = false; });

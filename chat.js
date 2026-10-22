@@ -38,20 +38,30 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: message }] }],
-        systemInstruction: { parts: [{ text: prompts[lang] || prompts['fr'] }] }
+        system_instruction: {
+          parts: [{ text: prompts[lang] || prompts['fr'] }]
+        },
+        contents: [
+          { role: "user", parts: [{ text: message }] }
+        ]
       })
     });
     
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Erreur Google Gemini :", errorData);
+      return res.status(500).json({ reply: "Erreur API : " + response.status });
+    }
+
     const data = await response.json();
     
     if (data.candidates && data.candidates[0].content) {
       const reply = data.candidates[0].content.parts[0].text;
       return res.status(200).json({ reply });
     } else {
-      return res.status(500).json({ reply: "Désolée, je n'ai pas pu générer de réponse." });
+      return res.status(500).json({ reply: "Format de réponse invalide." });
     }
   } catch (error) {
-    return res.status(500).json({ error: "Assistant indisponible." });
+    return res.status(500).json({ reply: "Erreur serveur : " + error.message });
   }
 }

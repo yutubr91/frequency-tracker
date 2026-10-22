@@ -1,3 +1,5 @@
+[hidden] { display: none !important; }
+
 :root {
   --bg: #050b16; --panel: #0b1525; --line: #1b2c42; --text: #edf6ff; --muted: #8ea3bb; --cyan: #62f4dc; --blue: #68a9ff;
   --chat-bg: rgba(11, 21, 37, 0.95); --msg-bot-bg: #1b2c42; --msg-bot-text: #ffffff;
@@ -25,6 +27,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Inter,sans-s
 .glow-a{background:var(--cyan);top:25%;left:-180px}.glow-b{background:var(--blue);right:-200px;top:60%}
 .topbar{max-width:1240px;margin:auto;padding:22px 28px;display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--line)}
 .brand-mark{width:42px;height:42px;border:1px solid var(--cyan);border-radius:12px;display:grid;place-items:center;color:var(--cyan);font-weight:900;cursor:pointer;user-select:none;}
+.brand{display:grid;gap:1px;letter-spacing:1.4px;font-size:13px}
 .brand span{color:var(--cyan)}.brand small{font-size:9px;color:var(--muted)}
 .header-controls { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .icon-btn { background: var(--panel); border: 1px solid var(--line); color: var(--text); font-size: 16px; cursor: pointer; padding: 8px 10px; border-radius: 8px; transition: 0.2s; }
