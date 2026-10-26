@@ -26,7 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (chatWindow) chatWindow.style.display = "none";
 
-  // GESTION DU CLIC SUR L'ORBE
   if (orbBtn) {
     orbBtn.addEventListener("click", (e) => {
       e.preventDefault();

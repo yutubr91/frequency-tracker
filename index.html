@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07111f">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://api.qrserver.com; connect-src 'self'; font-src 'self'; object-src 'none'; upgrade-insecure-requests;">
-  <link rel="manifest" href="manifest.webmanifest">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://unpkg.com https://modelviewer.dev https://cdn.jsdelivr.net; font-src 'self'; object-src 'none'; upgrade-insecure-requests;">
+  <link rel="manifest" href="manifest.webmanifest.json">
   <link rel="stylesheet" href="styles.css">
   <title>FREQUENCY · Tracker BEP-20</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
 
@@ -38,7 +39,6 @@
   </header>
 
   <main>
-    <!-- L'ASSISTANTE (AVATAR 100% CSS) -->
     <div id="assistant" class="assistant-container">
       <div class="chat-window" id="chatWindow" style="display: none;">
         <div class="chat-header"><span data-i18n="chat_title">Assistante IA</span><button id="closeChat">×</button></div>
@@ -48,11 +48,9 @@
           <button id="sendChat">↑</button>
         </div>
       </div>
-      
-      <!-- LA ZONE CLIQUABLE (L'ORBE 3D CSS) -->
-      <div class="avatar-3d-wrapper" id="orbBtn" title="Cliquez pour discuter">
-        <div class="orb-ring"></div>
-        <div class="orb-core"></div>
+      <div class="avatar-3d-wrapper" id="orbBtn" title="Discuter">
+        <div class="hologram-base"></div>
+        <model-viewer src="https://modelviewer.dev/shared/assets/models/Astronaut.glb" alt="Assistant 3D" auto-rotate rotation-per-second="30deg" disable-zoom camera-controls interaction-prompt="none"></model-viewer>
       </div>
     </div>
 
@@ -112,6 +110,7 @@
     <footer><span>FREQUENCY TRACKER © 2026</span></footer>
   </main>
 
+  <!-- Modaux Abonnements et Paiement (identiques à avant) -->
   <div id="pricingModal" class="modal-overlay" hidden>
     <div class="modal-content">
       <button id="closePricingBtn" class="modal-close">×</button>
@@ -154,7 +153,6 @@
           <button id="copyAddressBtn" class="button ghost" style="padding: 10px;">Copier</button>
         </div>
       </div>
-
       <input type="text" id="userWalletInput" placeholder="Votre adresse de portefeuille (0x...)" style="margin-bottom: 10px; text-align: center;">
       <input type="text" id="txHashInput" placeholder="Collez le Hash de la transaction (0x...)" style="margin-bottom: 10px; text-align: center;">
       <button id="confirmPaymentBtn" class="button primary full" onclick="verifyPayment()">Vérifier le paiement</button>
