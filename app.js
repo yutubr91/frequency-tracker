@@ -26,8 +26,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (chatWindow) chatWindow.style.display = "none";
 
+  // GESTION DU CLIC SUR L'ORBE
   if (orbBtn) {
-    orbBtn.addEventListener("click", () => {
+    orbBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       if (chatWindow.style.display === "none") {
         chatWindow.style.display = "flex";
         chatInput.focus();
@@ -122,21 +124,13 @@ async function sendChatMessage() {
   try {
     const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, lang: currentLang }) });
     const data = await res.json();
-    
     chatMessages.removeChild(loadingDiv);
-    
-    // AFFICHAGE DÉTAILLÉ DE L'ERREUR (Si ça plante)
-    if (!res.ok) {
-      addMessage(`Erreur ${res.status} : ${data.reply || data.error || "Le serveur a planté"}`, "bot");
-    } else {
-      addMessage(data.reply || "Erreur de format", "bot");
-    }
+    if (!res.ok) addMessage(`Erreur ${res.status} : ${data.reply || data.error || "Le serveur a planté"}`, "bot");
+    else addMessage(data.reply || "Erreur de format", "bot");
   } catch (e) { 
-    chatMessages.removeChild(loadingDiv); 
-    addMessage("Erreur réseau (Vercel ne répond pas).", "bot"); 
+    chatMessages.removeChild(loadingDiv); addMessage("Erreur réseau (Vercel ne répond pas).", "bot"); 
   }
 }
-
 $("sendChat").addEventListener("click", sendChatMessage); $("chatInput").addEventListener("keypress", (e) => { if (e.key === "Enter") sendChatMessage(); });
 
 const pricingModal = $("pricingModal");
