@@ -10,6 +10,8 @@ async function isRateLimited(ip) {
   } catch (e) { return false; }
 }
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
@@ -24,9 +26,9 @@ export default async function handler(req, res) {
   }
 
   const prompts = {
-    fr: "Tu es FM-01, une belle assistante virtuelle. Réponds de manière concise en français.",
-    en: "You are FM-01, a beautiful virtual assistant. Answer concisely in English.",
-    es: "Eres FM-01, una hermosa asistente virtual. Responde de forma concisa en español."
+    fr: "Tu es FM-01, une assistante virtuelle intelligente. Réponds de manière concise et précise en français.",
+    en: "You are FM-01, a smart virtual assistant. Answer concisely and accurately in English.",
+    es: "Eres FM-01, una asistente virtual inteligente. Responde de forma concisa y precisa en español."
   };
 
   const bodyPayload = JSON.stringify({
@@ -34,30 +36,33 @@ export default async function handler(req, res) {
     contents: [{ role: "user", parts: [{ text: message }] }]
   });
 
-  try {
-    // 1. On tente avec le modèle le plus rapide (Flash)
-    let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
-    let response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: bodyPayload });
-    
-    // 2. Si erreur 503 (surcharge), on bascule sur le modèle Pro (plus lent mais plus stable)
-    if (response.status === 503 || response.status === 429) {
-      console.warn("Modèle Flash surchargé. Bascule sur le modèle Pro...");
-      url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
-      response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: bodyPayload });
-    }
+  const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.1-flash-lite"];
+  let lastError = null;
 
-    const data = await response.json();
-    
-    if (!response.ok) {
-      return res.status(response.status).json({ reply: "Erreur Google : " + (data.error?.message || "Le service est momentanément indisponible.") });
-    }
+  for (const model of models) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: bodyPayload });
+        
+        if (response.status === 503 || response.status === 429) {
+          console.warn(`[${model}] Surchargé (${response.status}). Tentative ${attempt}/2...`);
+          await sleep(1000 * Math.pow(2, attempt - 1));
+          continue;
+        }
 
-    if (data.candidates && data.candidates[0].content) {
-      return res.status(200).json({ reply: data.candidates[0].content.parts[0].text });
-    } else {
-      return res.status(500).json({ reply: "Format de réponse invalide." });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || `Erreur ${response.status}`);
+
+        if (data.candidates && data.candidates[0].content) {
+          return res.status(200).json({ reply: data.candidates[0].content.parts[0].text });
+        }
+      } catch (err) {
+        lastError = err;
+        console.error(`[${model}] Erreur : ${err.message}`);
+      }
     }
-  } catch (error) {
-    return res.status(500).json({ reply: "Erreur serveur : " + error.message });
   }
+
+  return res.status(500).json({ reply: "Tous les serveurs IA sont actuellement surchargés. Veuillez réessayer dans quelques instants." });
 }
