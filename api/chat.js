@@ -25,10 +25,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ reply: "Erreur : La clé GEMINI_API_KEY est manquante sur Vercel." });
   }
 
+  // C'EST ICI QUE L'ON DONNE SON RÔLE À L'IA
   const prompts = {
-    fr: "Tu es FM-01, une assistante virtuelle intelligente. Réponds de manière concise et précise en français.",
-    en: "You are FM-01, a smart virtual assistant. Answer concisely and accurately in English.",
-    es: "Eres FM-01, una asistente virtual inteligente. Responde de forma concisa y precisa en español."
+    fr: "Tu es FM-01, l'assistante virtuelle intelligente de l'application 'FREQUENCY TRACKER'. Cette application sert à analyser des portefeuilles de cryptomonnaies (BEP-20) sur la blockchain BNB Smart Chain. Tu aides les utilisateurs à comprendre la blockchain, à lire leurs soldes, et à utiliser l'application. Réponds toujours de manière concise, précise et amicale en français. Ne parle jamais de structures de données informatiques ou d'algorithmes, sauf si l'utilisateur le demande explicitement.",
+    en: "You are FM-01, the smart virtual assistant of the 'FREQUENCY TRACKER' app. This app is used to analyze cryptocurrency portfolios (BEP-20) on the BNB Smart Chain. You help users understand the blockchain, read their balances, and use the app. Always answer concisely, accurately, and friendly in English. Never talk about computer science data structures unless explicitly asked.",
+    es: "Eres FM-01, la asistente virtual inteligente de la aplicación 'FREQUENCY TRACKER'. Esta aplicación sirve para analizar carteras de criptomonedas (BEP-20) en la blockchain BNB Smart Chain. Ayudas a los usuarios a entender la blockchain, leer sus saldos y usar la aplicación. Responde siempre de forma concisa, precisa y amigable en español."
   };
 
   const bodyPayload = JSON.stringify({
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
     contents: [{ role: "user", parts: [{ text: message }] }]
   });
 
-  const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.1-flash-lite"];
+  const models = ["gemini-1.5-flash", "gemini-1.5-pro"]; 
   let lastError = null;
 
   for (const model of models) {
@@ -46,7 +47,6 @@ export default async function handler(req, res) {
         const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: bodyPayload });
         
         if (response.status === 503 || response.status === 429) {
-          console.warn(`[${model}] Surchargé (${response.status}). Tentative ${attempt}/2...`);
           await sleep(1000 * Math.pow(2, attempt - 1));
           continue;
         }
@@ -59,10 +59,9 @@ export default async function handler(req, res) {
         }
       } catch (err) {
         lastError = err;
-        console.error(`[${model}] Erreur : ${err.message}`);
       }
     }
   }
 
-  return res.status(500).json({ reply: "Tous les serveurs IA sont actuellement surchargés. Veuillez réessayer dans quelques instants." });
+  return res.status(500).json({ reply: "Tous les serveurs IA sont actuellement surchargés. Veuillez réessayer." });
 }
