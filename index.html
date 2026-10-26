@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07111f">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://unpkg.com https://modelviewer.dev https://cdn.jsdelivr.net; font-src 'self'; object-src 'none'; upgrade-insecure-requests;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://ajax.googleapis.com https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://ajax.googleapis.com https://unpkg.com https://modelviewer.dev https://cdn.jsdelivr.net; font-src 'self'; object-src 'none'; upgrade-insecure-requests;">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <title>FREQUENCY · Tracker BEP-20</title>
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <!-- SCRIPT OFFICIEL GOOGLE POUR LES MODÈLES 3D -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 </head>
 <body>
 
@@ -50,7 +51,8 @@
       </div>
       <div class="avatar-3d-wrapper" id="orbBtn" title="Discuter">
         <div class="hologram-base"></div>
-        <model-viewer src="https://modelviewer.dev/shared/assets/models/Astronaut.glb" auto-rotate rotation-per-second="30deg" disable-zoom camera-controls interaction-prompt="none"></model-viewer>
+        <!-- MODÈLE 3D ULTRA-STABLE -->
+        <model-viewer src="https://modelviewer.dev/shared/assets/models/astronaut.glb" auto-rotate rotation-per-second="30deg" disable-zoom camera-controls interaction-prompt="none"></model-viewer>
       </div>
     </div>
 

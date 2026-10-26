@@ -1,21 +1,13 @@
 async function isRateLimited(ip) {
   const key = `ratelimit:chat:${ip}`;
   try {
-    const res = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/incr/${key}`, {
-      headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` }
-    });
+    const res = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/incr/${key}`, { headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` } });
     const data = await res.json();
-    const count = data.result;
-    
-    if (count === 1) {
-      await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/expire/${key}/60`, {
-        headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` }
-      });
+    if (data.result === 1) {
+      await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/expire/${key}/60`, { headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` } });
     }
-    return count > 10;
-  } catch (e) {
-    return false;
-  }
+    return data.result > 10;
+  } catch (e) { return false; }
 }
 
 export default async function handler(req, res) {
@@ -25,12 +17,17 @@ export default async function handler(req, res) {
   if (await isRateLimited(ip)) return res.status(429).json({ reply: "Doucement ! Attendez 1 minute." });
 
   const { message, lang } = req.body;
-  if (!message || message.length > 500) return res.status(400).json({ error: "Message invalide" });
+  if (!message) return res.status(400).json({ error: "Message vide" });
+
+  // Vérification de la clé API
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(500).json({ reply: "Erreur : La clé GEMINI_API_KEY est manquante sur Vercel." });
+  }
 
   const prompts = {
-    fr: "Tu es FM-01, une belle assistante virtuelle 3D, intelligente, amicale et féminine. Tu aides les utilisateurs de cette application de suivi crypto. Réponds toujours en français, de manière concise.",
-    en: "You are FM-01, a beautiful 3D virtual assistant, smart, friendly and feminine. You help users of this crypto portfolio tracker app. Always answer in English, concisely.",
-    es: "Eres FM-01, una hermosa asistente virtual 3D, inteligente, amigable y femenina. Ayudas a los usuarios de esta aplicación de seguimiento de criptomonedas. Responde siempre en español, de forma concisa."
+    fr: "Tu es FM-01, une belle assistante virtuelle 3D. Réponds de manière concise en français.",
+    en: "You are FM-01, a beautiful 3D virtual assistant. Answer concisely in English.",
+    es: "Eres FM-01, una hermosa asistente virtual 3D. Responde de forma concisa en español."
   };
 
   try {
@@ -38,26 +35,19 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: prompts[lang] || prompts['fr'] }]
-        },
-        contents: [
-          { role: "user", parts: [{ text: message }] }
-        ]
+        system_instruction: { parts: [{ text: prompts[lang] || prompts['fr'] }] },
+        contents: [{ role: "user", parts: [{ text: message }] }]
       })
     });
     
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("Erreur Google Gemini :", errorData);
-      return res.status(500).json({ reply: "Erreur API : " + response.status });
-    }
-
     const data = await response.json();
     
+    if (!response.ok) {
+      return res.status(response.status).json({ reply: "Erreur Google : " + (data.error?.message || "Clé invalide") });
+    }
+
     if (data.candidates && data.candidates[0].content) {
-      const reply = data.candidates[0].content.parts[0].text;
-      return res.status(200).json({ reply });
+      return res.status(200).json({ reply: data.candidates[0].content.parts[0].text });
     } else {
       return res.status(500).json({ reply: "Format de réponse invalide." });
     }

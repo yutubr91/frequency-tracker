@@ -10,16 +10,11 @@ let clickTimer;
 async function checkPremiumStatus() {
   const savedWallet = localStorage.getItem("freq_current_wallet");
   if (!savedWallet) return;
-
   try {
     const res = await fetch(`/api/check-premium?address=${savedWallet}`);
     const data = await res.json();
-    if (data.isPremium) {
-      console.log("Statut Premium confirmé par le serveur.");
-    }
-  } catch (e) {
-    console.warn("Impossible de vérifier le statut Premium.");
-  }
+    if (data.isPremium) console.log("Statut Premium confirmé.");
+  } catch (e) { console.warn("Impossible de vérifier le statut Premium."); }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -28,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatWindow = $("chatWindow");
   const orbBtn = $("orbBtn");
   const chatInput = $("chatInput");
-  const chatMessages = $("chatMessages");
 
   if (chatWindow) chatWindow.style.display = "none";
 
@@ -44,9 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if ($("closeChat")) {
-    $("closeChat").addEventListener("click", () => { 
-      chatWindow.style.display = "none"; 
-    });
+    $("closeChat").addEventListener("click", () => { chatWindow.style.display = "none"; });
   }
 
   const logo = document.querySelector(".brand-mark");
@@ -54,67 +46,34 @@ document.addEventListener("DOMContentLoaded", () => {
     logo.addEventListener("click", () => {
       clickCount++;
       clearTimeout(clickTimer);
-      if (clickCount >= 5) {
-        promptCreatorPassword();
-        clickCount = 0; 
-      } else {
-        clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
-      }
+      if (clickCount >= 5) { promptCreatorPassword(); clickCount = 0; } 
+      else { clickTimer = setTimeout(() => { clickCount = 0; }, 2000); }
     });
   }
 });
 
 async function promptCreatorPassword() {
   if (isCreator) {
-    const confirmDisable = confirm("Voulez-vous désactiver le mode Créateur ?");
-    if (confirmDisable) {
-      isCreator = false;
-      resetCreatorStyle();
-    }
+    if (confirm("Voulez-vous désactiver le mode Créateur ?")) { isCreator = false; resetCreatorStyle(); }
     return;
   }
-
   const pass = prompt("🔒 Entrez le code secret Créateur :");
   if (!pass) return;
-
   try {
-    const res = await fetch("/api/check-creator", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: pass })
-    });
+    const res = await fetch("/api/check-creator", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pass }) });
     const data = await res.json();
-
-    if (data.success) {
-      isCreator = true;
-      alert("👑 Code correct ! Bienvenue sur votre application.");
-      applyCreatorStyle();
-    } else {
-      alert("❌ Erreur : " + (data.error || "Code incorrect."));
-    }
-  } catch (e) {
-    alert("Erreur de vérification avec le serveur.");
-  }
+    if (data.success) { isCreator = true; alert("👑 Code correct !"); applyCreatorStyle(); } 
+    else { alert("❌ Erreur : " + (data.error || "Code incorrect.")); }
+  } catch (e) { alert("Erreur de vérification avec le serveur."); }
 }
 
 function applyCreatorStyle() {
   const proBtn = $("openPricingBtn");
-  if (proBtn) {
-    proBtn.innerHTML = "👑 Compte Créateur";
-    proBtn.style.background = "linear-gradient(110deg, #ffd700, #ff8c00)";
-    proBtn.style.color = "#000";
-    proBtn.style.boxShadow = "0 0 15px rgba(255, 215, 0, 0.5)";
-  }
+  if (proBtn) { proBtn.innerHTML = "👑 Compte Créateur"; proBtn.style.background = "linear-gradient(110deg, #ffd700, #ff8c00)"; proBtn.style.color = "#000"; proBtn.style.boxShadow = "0 0 15px rgba(255, 215, 0, 0.5)"; }
 }
-
 function resetCreatorStyle() {
   const proBtn = $("openPricingBtn");
-  if (proBtn) {
-    proBtn.innerHTML = "✨ Passer Pro";
-    proBtn.style.background = ""; 
-    proBtn.style.color = "";
-    proBtn.style.boxShadow = "";
-  }
+  if (proBtn) { proBtn.innerHTML = "✨ Passer Pro"; proBtn.style.background = ""; proBtn.style.color = ""; proBtn.style.boxShadow = ""; }
 }
 
 const translations = {
@@ -162,9 +121,22 @@ async function sendChatMessage() {
   
   try {
     const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, lang: currentLang }) });
-    const data = await res.json(); chatMessages.removeChild(loadingDiv); addMessage(data.reply || "Error", "bot");
-  } catch (e) { chatMessages.removeChild(loadingDiv); addMessage("Erreur de connexion.", "bot"); }
+    const data = await res.json();
+    
+    chatMessages.removeChild(loadingDiv);
+    
+    // AFFICHAGE DÉTAILLÉ DE L'ERREUR (Si ça plante)
+    if (!res.ok) {
+      addMessage(`Erreur ${res.status} : ${data.reply || data.error || "Le serveur a planté"}`, "bot");
+    } else {
+      addMessage(data.reply || "Erreur de format", "bot");
+    }
+  } catch (e) { 
+    chatMessages.removeChild(loadingDiv); 
+    addMessage("Erreur réseau (Vercel ne répond pas).", "bot"); 
+  }
 }
+
 $("sendChat").addEventListener("click", sendChatMessage); $("chatInput").addEventListener("keypress", (e) => { if (e.key === "Enter") sendChatMessage(); });
 
 const pricingModal = $("pricingModal");
@@ -178,12 +150,9 @@ window.openPayment = function(planName, priceInEuro) {
   $("cryptoAmount").textContent = `${bnbAmount} BNB`;
   $("walletAddress").value = MY_WALLET;
   $("qrCodeImg").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${MY_WALLET}`;
-  
   const currentAddr = $("addressInput").value.trim();
   if (currentAddr.length === 42) $("userWalletInput").value = currentAddr;
-
-  pricingModal.hidden = true;
-  paymentModal.hidden = false;
+  pricingModal.hidden = true; paymentModal.hidden = false;
 };
 
 $("closePaymentBtn").addEventListener("click", () => { paymentModal.hidden = true; });
@@ -196,25 +165,16 @@ $("copyAddressBtn").addEventListener("click", () => {
 window.verifyPayment = async function() {
   const txHash = $("txHashInput").value.trim();
   const userWallet = $("userWalletInput").value.trim();
-
-  if (txHash.length < 60) return alert("Veuillez entrer un Hash de transaction valide.");
-  if (userWallet.length !== 42) return alert("Veuillez entrer l'adresse de VOTRE portefeuille (celle qui a envoyé l'argent).");
+  if (txHash.length < 60) return alert("Hash invalide.");
+  if (userWallet.length !== 42) return alert("Adresse de portefeuille invalide.");
 
   const btn = $("confirmPaymentBtn");
-  btn.textContent = "Vérification en cours..."; btn.disabled = true;
-
+  btn.textContent = "Vérification..."; btn.disabled = true;
   try {
-    const res = await fetch("/api/verify-payment", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ txHash, userWallet })
-    });
+    const res = await fetch("/api/verify-payment", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ txHash, userWallet }) });
     const data = await res.json();
-    if (data.success) {
-      alert("🎉 Paiement validé ! Votre adresse est maintenant Premium.");
-      localStorage.setItem("freq_current_wallet", userWallet);
-      paymentModal.hidden = true;
-    } else {
-      alert("❌ Erreur : " + (data.error || "Paiement invalide."));
-    }
+    if (data.success) { alert("🎉 Paiement validé !"); localStorage.setItem("freq_current_wallet", userWallet); paymentModal.hidden = true; } 
+    else { alert("❌ Erreur : " + (data.error || "Paiement invalide.")); }
   } catch (e) { alert("Erreur de connexion au serveur."); } 
   finally { btn.textContent = "Vérifier le paiement"; btn.disabled = false; }
 };
