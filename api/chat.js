@@ -29,20 +29,27 @@ export default async function handler(req, res) {
     es: "Eres FM-01, una hermosa asistente virtual. Responde de forma concisa en español."
   };
 
+  const bodyPayload = JSON.stringify({
+    system_instruction: { parts: [{ text: prompts[lang] || prompts['fr'] }] },
+    contents: [{ role: "user", parts: [{ text: message }] }]
+  });
+
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: prompts[lang] || prompts['fr'] }] },
-        contents: [{ role: "user", parts: [{ text: message }] }]
-      })
-    });
+    // 1. On tente avec le modèle le plus rapide (Flash)
+    let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    let response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: bodyPayload });
     
+    // 2. Si erreur 503 (surcharge), on bascule sur le modèle Pro (plus lent mais plus stable)
+    if (response.status === 503 || response.status === 429) {
+      console.warn("Modèle Flash surchargé. Bascule sur le modèle Pro...");
+      url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
+      response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: bodyPayload });
+    }
+
     const data = await response.json();
     
     if (!response.ok) {
-      return res.status(response.status).json({ reply: "Erreur Google : " + (data.error?.message || "Clé invalide ou modèle indisponible") });
+      return res.status(response.status).json({ reply: "Erreur Google : " + (data.error?.message || "Le service est momentanément indisponible.") });
     }
 
     if (data.candidates && data.candidates[0].content) {
