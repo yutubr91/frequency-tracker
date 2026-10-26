@@ -1,4 +1,4 @@
-const CACHE = "frequency-tracker-v10";
+const CACHE = "frequency-tracker-v12"; // VERSION 12 POUR FORCER LA MISE A JOUR
 const CRITICAL_ASSETS = ["/index.html", "/app.js"];
 const STATIC_ASSETS = ["/styles.css", "/manifest.webmanifest.json"];
 const API_PATH_PREFIX = "/api";

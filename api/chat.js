@@ -22,14 +22,13 @@ export default async function handler(req, res) {
   if (!message) return res.status(400).json({ error: "Message vide" });
 
   if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ reply: "Erreur : La clé GEMINI_API_KEY est manquante sur Vercel." });
+    return res.status(500).json({ reply: "Erreur : La clé GEMINI_API_KEY est manquante." });
   }
 
-  // C'EST ICI QUE L'ON DONNE SON RÔLE À L'IA
   const prompts = {
-    fr: "Tu es FM-01, l'assistante virtuelle intelligente de l'application 'FREQUENCY TRACKER'. Cette application sert à analyser des portefeuilles de cryptomonnaies (BEP-20) sur la blockchain BNB Smart Chain. Tu aides les utilisateurs à comprendre la blockchain, à lire leurs soldes, et à utiliser l'application. Réponds toujours de manière concise, précise et amicale en français. Ne parle jamais de structures de données informatiques ou d'algorithmes, sauf si l'utilisateur le demande explicitement.",
-    en: "You are FM-01, the smart virtual assistant of the 'FREQUENCY TRACKER' app. This app is used to analyze cryptocurrency portfolios (BEP-20) on the BNB Smart Chain. You help users understand the blockchain, read their balances, and use the app. Always answer concisely, accurately, and friendly in English. Never talk about computer science data structures unless explicitly asked.",
-    es: "Eres FM-01, la asistente virtual inteligente de la aplicación 'FREQUENCY TRACKER'. Esta aplicación sirve para analizar carteras de criptomonedas (BEP-20) en la blockchain BNB Smart Chain. Ayudas a los usuarios a entender la blockchain, leer sus saldos y usar la aplicación. Responde siempre de forma concisa, precisa y amigable en español."
+    fr: "Tu es FM-01, l'assistante virtuelle de l'application 'FREQUENCY TRACKER'. Cette application analyse les portefeuilles crypto BEP-20 sur la BNB Smart Chain. Réponds en français, de manière concise et amicale.",
+    en: "You are FM-01, assistant of 'FREQUENCY TRACKER' for BEP-20 crypto portfolios on BNB Chain. Answer in English, concisely.",
+    es: "Eres FM-01, asistente de 'FREQUENCY TRACKER' para carteras BEP-20. Responde en español de forma concisa."
   };
 
   const bodyPayload = JSON.stringify({
@@ -37,31 +36,22 @@ export default async function handler(req, res) {
     contents: [{ role: "user", parts: [{ text: message }] }]
   });
 
+  // Noms de modèles officiels Google
   const models = ["gemini-1.5-flash", "gemini-1.5-pro"]; 
-  let lastError = null;
-
+  
   for (const model of models) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
-        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: bodyPayload });
-        
-        if (response.status === 503 || response.status === 429) {
-          await sleep(1000 * Math.pow(2, attempt - 1));
-          continue;
-        }
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+      const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: bodyPayload });
+      const data = await response.json();
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || `Erreur ${response.status}`);
-
-        if (data.candidates && data.candidates[0].content) {
-          return res.status(200).json({ reply: data.candidates[0].content.parts[0].text });
-        }
-      } catch (err) {
-        lastError = err;
+      if (response.ok && data.candidates && data.candidates[0].content) {
+        return res.status(200).json({ reply: data.candidates[0].content.parts[0].text });
       }
+    } catch (err) {
+      console.error(`Erreur ${model}:`, err.message);
     }
   }
 
-  return res.status(500).json({ reply: "Tous les serveurs IA sont actuellement surchargés. Veuillez réessayer." });
+  return res.status(500).json({ reply: "Erreur de connexion avec l'Intelligence Artificielle." });
 }
